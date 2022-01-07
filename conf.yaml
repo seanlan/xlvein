@@ -5,3 +5,6 @@ host: ":8090"
 #db配置
 mysql:
   root:q145145145@tcp(127.0.0.1:3306)/vein?parseTime=true&loc=Local&charset=utf8mb4&collation=utf8mb4_unicode_ci
+exchange:
+  type: "local"
+  rabbitmq: ""
