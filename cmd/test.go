@@ -17,9 +17,15 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/seanlan/xlvein/pkg/veinsdk"
 
 	"github.com/spf13/cobra"
 )
+
+func testFunc(cmd *cobra.Command, args []string) {
+	sdk := veinsdk.New("", "test", "j8jasd98efan9sdfj89asjdf")
+	fmt.Println(sdk.ProduceIMToken("user_1"))
+}
 
 // testCmd represents the test command
 var testCmd = &cobra.Command{
@@ -31,9 +37,7 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("test called")
-	},
+	Run: testFunc,
 }
 
 func init() {

@@ -1,24 +1,21 @@
 package exchange
 
-import (
-	"context"
-)
+import "context"
 
-type LocalExchange struct {
+type RabbitMQExchange struct {
 	logger    Logger
 	consume   MessageConsume
 	messageCh chan Message
 }
 
-func NewLocalExchange(log Logger) *LocalExchange {
-	return &LocalExchange{
+func NewRabbitMQExchange(log Logger) *RabbitMQExchange {
+	return &RabbitMQExchange{
 		logger:    log,
 		messageCh: make(chan Message),
 	}
 }
 
-// Push 将消息推送到交换器
-func (l *LocalExchange) Push(message Message) {
+func (l *RabbitMQExchange) Push(message Message) {
 	defer func() {
 		if err := recover(); err != nil {
 			l.logger.Error("LocalExchange.Push panic: %v", err)
@@ -28,13 +25,12 @@ func (l *LocalExchange) Push(message Message) {
 	return
 }
 
-// Receive 消费消息（从交换器接收消息）
-func (l *LocalExchange) Receive(consume MessageConsume) {
+func (l *RabbitMQExchange) Receive(consume MessageConsume) {
 	l.consume = consume
 	return
 }
 
-func (l *LocalExchange) loop(ctx context.Context) {
+func (l *RabbitMQExchange) loop(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -45,10 +41,11 @@ func (l *LocalExchange) loop(ctx context.Context) {
 	}
 }
 
-func (l *LocalExchange) Start(ctx context.Context) {
+func (l *RabbitMQExchange) Start(ctx context.Context) {
 	go l.loop(ctx)
 }
 
-func (l *LocalExchange) Stop() {
+func (l *RabbitMQExchange) Stop() {
 	close(l.messageCh)
 }
+

@@ -23,7 +23,7 @@ func MakeTimedToken(data, secret string, expire int64) (string, error) {
 		claims.ExpiresAt = time.Now().Add(time.Second * time.Duration(expire)).Unix()
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(secret)
+	return token.SignedString([]byte(secret))
 }
 
 func MapToUrlencoded(m map[string]string, secretKey string) string {

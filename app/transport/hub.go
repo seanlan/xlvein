@@ -50,6 +50,9 @@ func InitHub(ctx context.Context, ex exchange.Exchange, logger exchange.Logger) 
 func (h *Hub) Join(appID, Tag string, conn *websocket.Conn) {
 	transport := NewTransport(appID, Tag, conn, h)
 	transport.Start()
+	if h.clients[transport.Key] == nil {
+		h.clients[transport.Key] = hashset.New()
+	}
 	h.clients[transport.Key].Add(transport)
 }
 
@@ -81,13 +84,16 @@ func (h *Hub) PushToExchange(appID string, msg Message) {
 func (h *Hub) sendToTransport(msg exchange.Message) {
 	key := makeTransportKey(msg.AppID, msg.To)
 	m := Message{
-		From:   msg.From,
-		To:     msg.To,
-		Event:  msg.Event,
-		Data:   msg.Data,
-		MsgID:  msg.MsgID,
-		SendAt: msg.SendAt,
+		From:           msg.From,
+		To:             msg.To,
+		Event:          msg.Event,
+		Data:           msg.Data,
+		MsgID:          msg.MsgID,
+		SendAt:         msg.SendAt,
+		ConversationID: msg.ConversationID,
 	}
+	h.logger.Debugf("sendToTransport: %s", key)
+	h.logger.Debugf("sendToTransport: %+v", m)
 	if sets, ok := h.clients[key]; ok {
 		for _, t := range sets.Values() {
 			t.(*Transport).Send(m)
@@ -100,10 +106,8 @@ func (h *Hub) distribute(message exchange.Message) {
 	switch message.Event {
 	case exchange.EventChatSingle:
 		h.sendToTransport(message)
-		break
 	case exchange.EventChatRoom:
 		h.sendToTransport(message)
-		break
 	}
 }
 

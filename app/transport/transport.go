@@ -52,9 +52,12 @@ func (trans *Transport) Start() {
 // 启动消息读取
 func (trans *Transport) doRead() {
 	defer func() {
+		trans.hub.logger.Debugf("trans.hub.clients : %+v", trans.hub.clients)
 		trans.hub.Drop(trans)
 		_ = trans.conn.Close()
 		close(trans.sendPool)
+		trans.hub.logger.Debugf("trans.hub.clients : %+v", trans.hub.clients)
+		trans.hub.logger.Debugf("doRead defer")
 	}()
 	_ = trans.conn.SetReadDeadline(time.Now().Add(pongWait))
 	// 设置心跳处理
@@ -71,7 +74,6 @@ func (trans *Transport) doRead() {
 				err,
 				websocket.CloseGoingAway,
 				websocket.CloseAbnormalClosure) {
-				trans.hub.logger.Error("error: %v", err)
 			}
 			break
 		}
@@ -96,35 +98,38 @@ func (trans *Transport) doWrite() {
 	defer func() {
 		ticker.Stop()
 		_ = trans.conn.Close()
+		trans.hub.logger.Debugf("doWrite defer trans.conn.Close")
 	}()
-	select {
-	case message, ok := <-trans.sendPool:
-		_ = trans.conn.SetWriteDeadline(time.Now().Add(writeWait))
-		if !ok {
-			_ = trans.conn.WriteMessage(websocket.CloseMessage, nil)
-			return
-		}
-		var (
-			poolLen = len(trans.sendPool)
-			pool    = make([]Message, poolLen+1)
-		)
-		pool = append(pool, message)
-		for i := 0; i < poolLen; i++ {
-			pool = append(pool, <-trans.sendPool)
-		}
-		for _, msg := range pool {
-			buff, err := jsoniter.Marshal(msg)
-			if err == nil {
-				err := trans.conn.WriteMessage(websocket.TextMessage, buff)
-				if err != nil {
-					return
+	for {
+		select {
+		case message, ok := <-trans.sendPool:
+			_ = trans.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if !ok {
+				_ = trans.conn.WriteMessage(websocket.CloseMessage, nil)
+				return
+			}
+			var (
+				poolLen = len(trans.sendPool)
+				pool    = make([]Message, 0,poolLen+1)
+			)
+			pool = append(pool, message)
+			for i := 0; i < poolLen; i++ {
+				pool = append(pool, <-trans.sendPool)
+			}
+			for _, msg := range pool {
+				buff, err := jsoniter.Marshal(msg)
+				if err == nil {
+					err := trans.conn.WriteMessage(websocket.TextMessage, buff)
+					if err != nil {
+						return
+					}
 				}
 			}
-		}
-	case <-ticker.C:
-		_ = trans.conn.SetWriteDeadline(time.Now().Add(writeWait))
-		if err := trans.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-			return
+		case <-ticker.C:
+			_ = trans.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := trans.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
 		}
 	}
 }
