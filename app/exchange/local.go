@@ -10,11 +10,11 @@ type LocalExchange struct {
 	messageCh chan Message
 }
 
-func NewLocalExchange(log Logger) *LocalExchange {
+func NewLocalExchange(log Logger) (*LocalExchange, error) {
 	return &LocalExchange{
 		logger:    log,
 		messageCh: make(chan Message),
-	}
+	}, nil
 }
 
 // Push 将消息推送到交换器

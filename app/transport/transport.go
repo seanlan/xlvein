@@ -110,7 +110,7 @@ func (trans *Transport) doWrite() {
 			}
 			var (
 				poolLen = len(trans.sendPool)
-				pool    = make([]Message, 0,poolLen+1)
+				pool    = make([]Message, 0, poolLen+1)
 			)
 			pool = append(pool, message)
 			for i := 0; i < poolLen; i++ {

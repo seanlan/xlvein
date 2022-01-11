@@ -27,8 +27,24 @@ import (
 )
 
 func startFunc(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
-	transport.InitHub(ctx, exchange.NewLocalExchange(zap.S()), zap.S())
+	var (
+		err error
+		ctx = context.Background()
+		_exchange exchange.Exchange
+	)
+
+	exchangeType := xlconfig.GetString("exchange", "type")
+	switch exchangeType {
+	case "local":
+		_exchange, err = exchange.NewLocalExchange(zap.S())
+	case "rabbitmq":
+		_exchange, err = exchange.NewRabbitMQExchange(xlconfig.GetString("exchange", "rabbitmq"), zap.S())
+
+	}
+	if err != nil {
+		zap.S().Fatal("new exchange error", zap.Error(err))
+	}
+	transport.InitHub(ctx, _exchange, zap.S())
 	router.Setup(conf.DebugMode)
 	router.Run(xlconfig.GetString("host"))
 }

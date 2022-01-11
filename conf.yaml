@@ -1,4 +1,4 @@
-debug: true
+debug: false
 app: "xlvein"
 #gin配置
 host: ":8090"
@@ -6,5 +6,5 @@ host: ":8090"
 mysql:
   root:q145145145@tcp(127.0.0.1:3306)/vein?parseTime=true&loc=Local&charset=utf8mb4&collation=utf8mb4_unicode_ci
 exchange:
-  type: "local"
-  rabbitmq: ""
+  type: "rabbitmq" # 消息交换类型 目前支持 rabbitmq,local local方式不支持分布式部署
+  rabbitmq: "amqp://xlvein:WFxg5FNMedN@T$z@127.0.0.1:5672/vein"
