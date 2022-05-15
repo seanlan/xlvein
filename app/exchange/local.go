@@ -7,18 +7,18 @@ import (
 type LocalExchange struct {
 	logger    Logger
 	consume   MessageConsume
-	messageCh chan Message
+	messageCh chan ExchangeMessage
 }
 
 func NewLocalExchange(log Logger) (*LocalExchange, error) {
 	return &LocalExchange{
 		logger:    log,
-		messageCh: make(chan Message),
+		messageCh: make(chan ExchangeMessage),
 	}, nil
 }
 
 // Push 将消息推送到交换器
-func (l *LocalExchange) Push(message Message) {
+func (l *LocalExchange) Push(message ExchangeMessage) {
 	defer func() {
 		if err := recover(); err != nil {
 			l.logger.Error("LocalExchange.Push panic: %v", err)

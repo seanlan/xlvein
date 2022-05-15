@@ -11,11 +11,10 @@ import (
 	"github.com/seanlan/xlvein/app/exchange"
 	"sort"
 	"strings"
-	"time"
 )
 
 // MakeConversationID 构建会话ID
-func MakeConversationID(appID, from, to string, event exchange.Event) string {
+func MakeConversationID(appID, from, to string, event exchange.ExchangeEvent) string {
 	if event == exchange.EventChatSingle {
 		keys := []string{from, to}
 		sort.Strings(keys)
@@ -29,7 +28,7 @@ func MakeConversationID(appID, from, to string, event exchange.Event) string {
 }
 
 type Hub struct {
-	Exchange exchange.Exchange
+	exchange exchange.Exchange
 	// clients Map
 	clients map[string]*hashset.Set
 	logger  exchange.Logger
@@ -39,7 +38,7 @@ var ClientHub *Hub
 
 func InitHub(ctx context.Context, ex exchange.Exchange, logger exchange.Logger) {
 	ClientHub = &Hub{
-		Exchange: ex,
+		exchange: ex,
 		clients:  make(map[string]*hashset.Set),
 		logger:   logger,
 	}
@@ -65,25 +64,24 @@ func (h *Hub) Drop(transport *Transport) {
 }
 
 // PushToExchange 将消费推送到消息交换器
-func (h *Hub) PushToExchange(appID string, msg Message) {
+func (h *Hub) PushToExchange(appID string, msg TransportMessage) {
 	uu, _ := uuid.NewUUID()
-	var exchangeMsg = exchange.Message{
+	var exchangeMsg = exchange.ExchangeMessage{
 		AppID:          appID,
 		From:           msg.From,
 		To:             msg.To,
 		Event:          msg.Event,
 		Data:           msg.Data,
 		MsgID:          uu.String(),
-		SendAt:         time.Now().Unix(),
 		ConversationID: MakeConversationID(appID, msg.From, msg.To, msg.Event),
 	}
-	h.Exchange.Push(exchangeMsg)
+	h.exchange.Push(exchangeMsg)
 }
 
 // 发送到指定的客户端
-func (h *Hub) sendToTransport(msg exchange.Message) {
+func (h *Hub) sendToTransport(msg exchange.ExchangeMessage) {
 	key := makeTransportKey(msg.AppID, msg.To)
-	m := Message{
+	m := TransportMessage{
 		From:           msg.From,
 		To:             msg.To,
 		Event:          msg.Event,
@@ -92,8 +90,6 @@ func (h *Hub) sendToTransport(msg exchange.Message) {
 		SendAt:         msg.SendAt,
 		ConversationID: msg.ConversationID,
 	}
-	h.logger.Debugf("sendToTransport: %s", key)
-	h.logger.Debugf("sendToTransport: %+v", m)
 	if sets, ok := h.clients[key]; ok {
 		for _, t := range sets.Values() {
 			t.(*Transport).Send(m)
@@ -102,19 +98,19 @@ func (h *Hub) sendToTransport(msg exchange.Message) {
 }
 
 // 消息分发
-func (h *Hub) distribute(message exchange.Message) {
+func (h *Hub) distribute(message exchange.ExchangeMessage) {
 	switch message.Event {
-	case exchange.EventChatSingle:
+	case exchange.EventChatSingle: // 单聊
 		h.sendToTransport(message)
-	case exchange.EventChatRoom:
+	case exchange.EventChatRoom:  // 群聊
 		h.sendToTransport(message)
 	}
 }
 
 // Run 启动
 func (h *Hub) Run(ctx context.Context) {
-	h.Exchange.Receive(func(message exchange.Message) {
+	h.exchange.Receive(func(message exchange.ExchangeMessage) {
 		h.distribute(message)
 	})
-	h.Exchange.Start(ctx)
+	h.exchange.Start(ctx)
 }

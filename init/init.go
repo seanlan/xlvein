@@ -2,7 +2,6 @@ package init
 
 import (
 	"github.com/seanlan/goutils/xlconfig"
-	"github.com/seanlan/xlvein/app/dao"
 	"github.com/seanlan/xlvein/conf"
 	"math/rand"
 	"time"
@@ -20,5 +19,4 @@ func init() {
 	// 初始化配置
 	xlconfig.Setup()
 	conf.Setup()
-	dao.DB = conf.NewDB(xlconfig.GetString("mysql"))
 }

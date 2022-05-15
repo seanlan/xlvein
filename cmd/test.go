@@ -16,15 +16,19 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"github.com/seanlan/xlvein/pkg/veinsdk"
-
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 func testFunc(cmd *cobra.Command, args []string) {
 	sdk := veinsdk.New("", "test", "j8jasd98efan9sdfj89asjdf")
-	fmt.Println(sdk.ProduceIMToken("user_1"))
+	zap.S().Info(sdk.ProduceIMToken("user_1"))
+	//ctx := context.TODO()
+	//ctx1 := context.WithValue(ctx, "a", 1)
+	//ctx2 := context.WithValue(ctx1, "b", 2)
+	//fmt.Println(ctx2.Value("a"))
+	//fmt.Println(ctx2.Value("b"))
 }
 
 // testCmd represents the test command

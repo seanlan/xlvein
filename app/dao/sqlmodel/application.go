@@ -44,7 +44,7 @@ var ApplicationColumns = struct {
 }
 
 type Application struct {
-	AppID     string `json:"app_id" gorm:"column:app_id;type:varchar(128);not null"`                 //APPID
+	AppID     string `json:"app_id" gorm:"column:app_id;type:varchar(128);not null"`                 //应用APPID
 	AppSecret string `json:"app_secret" gorm:"column:app_secret;type:varchar(255);not null"`         //APPSECRET
 	CreateAt  int64  `json:"create_at" gorm:"column:create_at;type:bigint;not null"`                 //创建时间
 	ID        uint64 `json:"id" gorm:"column:id;type:bigint unsigned;primaryKey;autoIncrement:true"` //

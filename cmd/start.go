@@ -28,8 +28,8 @@ import (
 
 func startFunc(cmd *cobra.Command, args []string) {
 	var (
-		err error
-		ctx = context.Background()
+		err       error
+		ctx       = context.Background()
 		_exchange exchange.Exchange
 	)
 

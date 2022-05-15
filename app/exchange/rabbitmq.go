@@ -3,14 +3,16 @@ package exchange
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	uuid "github.com/satori/go.uuid"
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"
+	"time"
 )
 
 const (
 	WsExchangeName = "xlvein.im"
+	WxQueueName    = "xlvein.im.queue"
 	ExchangeType   = "fanout"
 )
 
@@ -55,7 +57,7 @@ func (s *Session) Dial() (err error) {
 	}
 	// 声明队列
 	u4 := uuid.NewV4()
-	queueName := fmt.Sprintf("wool.queue.%s", u4.String())
+	queueName := WxQueueName + "." + u4.String()
 	queue, err = ch.QueueDeclare(queueName, false, true, true, false, nil)
 	if err != nil {
 		return
@@ -72,24 +74,23 @@ func (s *Session) Dial() (err error) {
 }
 
 // Close 关闭连接
-func (s *Session) Close()  {
+func (s *Session) Close() {
 	_ = s.Ch.Close()
 	_ = s.Conn.Close()
 }
 
-func (s *Session) Receive(mq chan Message) (err error) {
+func (s *Session) Receive(mq chan ExchangeMessage) (err error) {
 	var (
 		deliveries <-chan amqp.Delivery
 		delivery   amqp.Delivery
 	)
 	defer func() {
 		s.Close()
-		zap.S().Info("receive message done")
 	}()
 	deliveries, err = s.Ch.Consume(
 		s.queue.Name,
 		"",
-		false,
+		true,
 		false,
 		false,
 		false,
@@ -98,59 +99,72 @@ func (s *Session) Receive(mq chan Message) (err error) {
 		return
 	}
 	for {
+		var loseConnection bool
 		select {
 		case delivery = <-deliveries:
 			if delivery.Body == nil {
-				zap.S().Info("receive message", zap.String("body", string(delivery.Body)))
+				loseConnection = true
 				break
 			}
-			var msg Message
+			var msg ExchangeMessage
 			err = json.Unmarshal(delivery.Body, &msg)
 			if err != nil {
-				zap.S().Info("unmarshal message error", zap.Error(err))
 				continue
 			}
 			mq <- msg
 		}
+		if loseConnection {
+			zap.S().Info("rabbitmq lose connection")
+			err = errors.New("rabbitmq lose connection")
+			break
+		}
 	}
+	return
 }
 
 type RabbitMQExchange struct {
 	logger    Logger
 	consume   MessageConsume
-	messageCh chan Message
+	messageCh chan ExchangeMessage
 	session   *Session
 }
 
 func NewRabbitMQExchange(uri string, log Logger) (ex *RabbitMQExchange, err error) {
 	ex = &RabbitMQExchange{
-		logger: log,
-		messageCh: make(chan Message),
+		logger:    log,
+		messageCh: make(chan ExchangeMessage),
 	}
 	session := NewSession(uri)
 	ex.session = session
-	err = ex.Dial(uri)
+	err = ex.Dial()
 	if err != nil {
 		return nil, err
 	}
 	return
 }
 
-func (l *RabbitMQExchange) Dial(uri string) (err error) {
+func (l *RabbitMQExchange) Dial() (err error) {
 	err = l.session.Dial()
 	if err != nil {
 		return
 	}
 	go func() {
-		_err := l.session.Receive(l.messageCh)
-		if _err != nil {
-			return
+		for {
+			err = l.session.Dial()
+			if err != nil {
+				l.logger.Error(err)
+			}
+			err = l.session.Receive(l.messageCh)
+			if err != nil {
+				l.logger.Error(err)
+			}
+			time.Sleep(time.Second * 10) // 每5秒重连
 		}
 	}()
 	return
 }
 
-func (l *RabbitMQExchange) Push(message Message) {
+func (l *RabbitMQExchange) Push(message ExchangeMessage) {
 	defer func() {
 		if err := recover(); err != nil {
 			l.logger.Error("LocalExchange.Push panic: %v", err)
@@ -169,13 +183,7 @@ func (l *RabbitMQExchange) Push(message Message) {
 	msg.DeliveryMode = 2
 	err = l.session.Ch.Publish(WsExchangeName, "", false, false, msg)
 	if err != nil {
-		if e, ok := err.(*amqp.Error); ok {
-			if e.Code == amqp.ErrClosed.Code {
-				l.logger.Error("LocalExchange.Push reconnect")
-				_ = l.Dial(l.session.Uri)
-			}
-		}
-		l.logger.Errorf("LocalExchange.Push error: %v", err)
+		l.logger.Error("publish message error", zap.Error(err))
 		return
 	}
 	return

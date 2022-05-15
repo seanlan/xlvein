@@ -32,6 +32,7 @@ func SocketConnect(c *gin.Context) {
 	var req model.SocketConnectReq
 	err = r.RequestParser(&req)
 	if err != nil {
+		zap.S().Errorf("request parser error: %s", err.Error())
 		return
 	}
 	var (
@@ -40,12 +41,14 @@ func SocketConnect(c *gin.Context) {
 	)
 	err = dao.FetchApplication(c, &app, appQ.AppID.Eq(req.AppID))
 	if err != nil {
+		zap.S().Errorf("FetchApplication error: %s", err.Error())
 		r.JsonReturn(e.ErrAppNotFound)
 		return
 	}
 	jwt := xlhttp.NewJWT(app.AppSecret, 0)
 	tag, err := jwt.ParseToken(req.Token)
 	if err != nil {
+		zap.S().Errorf("ParseToken error: %s", err.Error())
 		r.JsonReturn(e.ErrTokenInvalid)
 		return
 	}

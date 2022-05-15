@@ -21,7 +21,7 @@ func CtxWithTransaction(ctx context.Context, db *gorm.DB) context.Context {
 	return context.WithValue(ctx, ctxTransactionKey{}, db)
 }
 
-// 如果使用跨模型事务则传参
+// GetDB 如果使用跨模型事务则传参
 func GetDB(ctx context.Context) *gorm.DB {
 	iface := ctx.Value(ctxTransactionKey{})
 	if iface != nil {

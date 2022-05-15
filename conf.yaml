@@ -1,10 +1,18 @@
-debug: false
+debug: true
 app: "xlvein"
-#gin配置
+# gin配置
 host: ":8090"
-#db配置
+# db配置
 mysql:
   root:q145145145@tcp(127.0.0.1:3306)/vein?parseTime=true&loc=Local&charset=utf8mb4&collation=utf8mb4_unicode_ci
+# redis配置
+redis:
+  hosts: "127.0.0.1:6379"
+  prefix: "weplay"
+  username: ""
+  password: ""
+  db: 0
+# 交换机配置
 exchange:
   type: "rabbitmq" # 消息交换类型 目前支持 rabbitmq,local local方式不支持分布式部署
   rabbitmq: "amqp://xlvein:WFxg5FNMedN@T$z@127.0.0.1:5672/vein"

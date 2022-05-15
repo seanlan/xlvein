@@ -3,10 +3,9 @@ package transport
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
-	jsoniter "github.com/json-iterator/go"
+	json "github.com/json-iterator/go"
 	"time"
 )
 
@@ -24,12 +23,12 @@ func makeTransportKey(appID, tag string) string {
 }
 
 type Transport struct {
-	AppID    string          // 应用ID
-	Tag      string          // 连接标签
-	Key      string          // 连接标识  = AppID:Tag
-	hub      *Hub            // 会话管理
-	conn     *websocket.Conn //websocket连接
-	sendPool chan Message    // 发送消息队列
+	AppID    string                // 应用ID
+	Tag      string                // 连接标签
+	Key      string                // 连接标识  = makeTransportKey(AppID:Tag)
+	hub      *Hub                  // 会话管理
+	conn     *websocket.Conn       //websocket连接
+	sendPool chan TransportMessage // 发送消息队列
 }
 
 // NewTransport 创建一个新的连接
@@ -40,7 +39,7 @@ func NewTransport(appID, tag string, conn *websocket.Conn, hub *Hub) *Transport 
 		Key:      makeTransportKey(appID, tag),
 		hub:      hub,
 		conn:     conn,
-		sendPool: make(chan Message, 100),
+		sendPool: make(chan TransportMessage, 100),
 	}
 }
 
@@ -79,13 +78,15 @@ func (trans *Transport) doRead() {
 		}
 		trans.hub.logger.Debugf("received messages: %s", string(message))
 		//消息重新封装
-		var msg Message
+		var msg TransportMessage
 		err = json.Unmarshal(message, &msg)
 		if err != nil {
 			// 消息格式解析失败
 			trans.hub.logger.Debugf("Unmarshal failed:%s", message)
 			continue
 		}
+		msg.From = trans.Tag
+		msg.SendAt = time.Now().Unix()
 		// 将消息推送到消息交换器
 		trans.hub.PushToExchange(trans.AppID, msg)
 	}
@@ -110,14 +111,14 @@ func (trans *Transport) doWrite() {
 			}
 			var (
 				poolLen = len(trans.sendPool)
-				pool    = make([]Message, 0, poolLen+1)
+				pool    = make([]TransportMessage, 0, poolLen+1)
 			)
 			pool = append(pool, message)
 			for i := 0; i < poolLen; i++ {
 				pool = append(pool, <-trans.sendPool)
 			}
 			for _, msg := range pool {
-				buff, err := jsoniter.Marshal(msg)
+				buff, err := json.Marshal(msg)
 				if err == nil {
 					err := trans.conn.WriteMessage(websocket.TextMessage, buff)
 					if err != nil {
@@ -135,6 +136,6 @@ func (trans *Transport) doWrite() {
 }
 
 // Send 发送消息
-func (trans *Transport) Send(message Message) {
+func (trans *Transport) Send(message TransportMessage) {
 	trans.sendPool <- message
 }

@@ -8,7 +8,10 @@ var (
 )
 
 func Setup() {
+	xlconfig.Setup()
 	DebugMode = xlconfig.GetBool("debug")
-	AppName = xlconfig.GetString("app_name")
+	AppName = xlconfig.GetString("app")
 	initLogging(DebugMode, AppName)
+	initRedis()
+	initDB()
 }
