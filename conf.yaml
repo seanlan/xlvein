@@ -14,7 +14,7 @@ redis:
   db: 0
 # 交换机配置
 exchange:
-  type: "rabbitmq" # 消息交换类型 目前支持 rabbitmq,local local方式不支持分布式部署
+  type: "local" # 消息交换类型 目前支持 rabbitmq,local local方式不支持分布式部署
   rabbitmq: "amqp://xlvein:WFxg5FNMedN@T$z@127.0.0.1:5672/vein"
   exchange_name: "xlvein.im"
   queue_name: "xlvein.im.queue"

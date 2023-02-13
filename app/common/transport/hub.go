@@ -57,6 +57,7 @@ func (h *Hub) PushToExchange(appID string, msg Message) {
 		Event:          msg.Event,
 		Data:           msg.Data,
 		MsgID:          uu.String(),
+		SendAt:         msg.SendAt,
 		ConversationID: msg.ConversationID,
 	}
 	h.exchange.Push(exchangeMsg)
