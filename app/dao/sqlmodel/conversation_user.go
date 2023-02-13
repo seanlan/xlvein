@@ -28,13 +28,31 @@ package sqlmodel
 const TableNameConversationUser = "conversation_user"
 
 var ConversationUserColumns = struct {
-	ID FieldBase
+	ID             FieldBase
+	AppID          FieldBase
+	ConversationID FieldBase
+	UserTag        FieldBase
+	UnreadCount    FieldBase
+	UpdateAt       FieldBase
+	CreateAt       FieldBase
 }{
-	ID: FieldBase{"`id`"},
+	ID:             FieldBase{"`id`"},
+	AppID:          FieldBase{"`app_id`"},
+	ConversationID: FieldBase{"`conversation_id`"},
+	UserTag:        FieldBase{"`user_tag`"},
+	UnreadCount:    FieldBase{"`unread_count`"},
+	UpdateAt:       FieldBase{"`update_at`"},
+	CreateAt:       FieldBase{"`create_at`"},
 }
 
 type ConversationUser struct {
-	ID uint64 `json:"id" gorm:"column:id;type:bigint unsigned;primaryKey;autoIncrement:true"` //
+	ID             uint64 `json:"id" gorm:"column:id;type:bigint unsigned;primaryKey;autoIncrement:true"`  //
+	AppID          string `json:"app_id" gorm:"column:app_id;type:varchar(20);not null"`                   //应用标识
+	ConversationID string `json:"conversation_id" gorm:"column:conversation_id;type:varchar(56);not null"` //会话ID
+	UserTag        string `json:"user_tag" gorm:"column:user_tag;type:varchar(128);not null"`              //用户标识
+	UnreadCount    int64  `json:"unread_count" gorm:"column:unread_count;type:bigint;not null"`            //未读消息
+	UpdateAt       int64  `json:"update_at" gorm:"column:update_at;type:bigint;not null"`                  //最后更新时间
+	CreateAt       int64  `json:"create_at" gorm:"column:create_at;type:bigint;not null"`                  //创建时间
 }
 
 // TableName ConversationUser's table name

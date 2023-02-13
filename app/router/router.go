@@ -32,14 +32,13 @@ func Setup(debug bool) {
 	{
 		wsGroup.GET("connect", v1.SocketConnect)
 	}
-	health := Router.Group("health")
-	{
-		health.GET("check", v1.HealthCheck)
-	}
 	// api 路由
-	//apiGroup := Router.Group("api/v1")
-	//{
-	//}
+	apiGroup := Router.Group("api/v1")
+	imGroup := apiGroup.Group("im")
+	{
+		// 创建会话
+		imGroup.POST("create", v1.CreateConversation)
+	}
 }
 
 func Run(addr string) {

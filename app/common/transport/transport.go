@@ -3,16 +3,17 @@ package transport
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
-	json "github.com/json-iterator/go"
+	//json "github.com/json-iterator/go"
 	"time"
 )
 
 const (
-	writeWait  = 10 * time.Second
-	pongWait   = 60 * time.Second    //心跳60秒一次
-	pingPeriod = (pongWait * 9) / 10 //定时发送ping消息的间隔时间
+	writeWait  = 10 * time.Second    // 发送消息超时时间 10秒
+	pongWait   = 10 * time.Second    // 响应ping消息超时时间 10秒
+	pingPeriod = (pongWait * 9) / 10 // 发送ping消息间隔时间 9秒
 )
 
 // makeTransportKey 根据appID和tag生成client唯一标示
@@ -23,12 +24,12 @@ func makeTransportKey(appID, tag string) string {
 }
 
 type Transport struct {
-	AppID    string                // 应用ID
-	Tag      string                // 连接标签
-	Key      string                // 连接标识  = makeTransportKey(AppID:Tag)
-	hub      *Hub                  // 会话管理
-	conn     *websocket.Conn       //websocket连接
-	sendPool chan TransportMessage // 发送消息队列
+	AppID    string          // 应用ID
+	Tag      string          // 连接标签
+	Key      string          // 连接标识  = makeTransportKey(AppID:Tag)
+	hub      *Hub            // 会话管理
+	conn     *websocket.Conn //websocket连接
+	sendPool chan Message    // 发送消息队列
 }
 
 // NewTransport 创建一个新的连接
@@ -39,7 +40,7 @@ func NewTransport(appID, tag string, conn *websocket.Conn, hub *Hub) *Transport 
 		Key:      makeTransportKey(appID, tag),
 		hub:      hub,
 		conn:     conn,
-		sendPool: make(chan TransportMessage, 100),
+		sendPool: make(chan Message, 100),
 	}
 }
 
@@ -78,15 +79,17 @@ func (trans *Transport) doRead() {
 		}
 		trans.hub.logger.Debugf("received messages: %s", string(message))
 		//消息重新封装
-		var msg TransportMessage
+		var msg Message
 		err = json.Unmarshal(message, &msg)
 		if err != nil {
 			// 消息格式解析失败
 			trans.hub.logger.Debugf("Unmarshal failed:%s", message)
 			continue
 		}
+		//msg.Event = msg
 		msg.From = trans.Tag
 		msg.SendAt = time.Now().Unix()
+		msg.ConversationID = msg.To
 		// 将消息推送到消息交换器
 		trans.hub.PushToExchange(trans.AppID, msg)
 	}
@@ -111,7 +114,7 @@ func (trans *Transport) doWrite() {
 			}
 			var (
 				poolLen = len(trans.sendPool)
-				pool    = make([]TransportMessage, 0, poolLen+1)
+				pool    = make([]Message, 0, poolLen+1)
 			)
 			pool = append(pool, message)
 			for i := 0; i < poolLen; i++ {
@@ -120,7 +123,7 @@ func (trans *Transport) doWrite() {
 			for _, msg := range pool {
 				buff, err := json.Marshal(msg)
 				if err == nil {
-					err := trans.conn.WriteMessage(websocket.TextMessage, buff)
+					err = trans.conn.WriteMessage(websocket.TextMessage, buff)
 					if err != nil {
 						return
 					}
@@ -136,6 +139,6 @@ func (trans *Transport) doWrite() {
 }
 
 // Send 发送消息
-func (trans *Transport) Send(message TransportMessage) {
+func (trans *Transport) Send(message Message) {
 	trans.sendPool <- message
 }

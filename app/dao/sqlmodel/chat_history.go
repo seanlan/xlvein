@@ -28,37 +28,37 @@ package sqlmodel
 const TableNameChatHistory = "chat_history"
 
 var ChatHistoryColumns = struct {
+	ID             FieldBase
 	AppID          FieldBase
 	ConversationID FieldBase
-	Data           FieldBase
-	Event          FieldBase
-	From           FieldBase
-	ID             FieldBase
 	MsgID          FieldBase
-	SendAt         FieldBase
+	From           FieldBase
 	To             FieldBase
+	Event          FieldBase
+	Data           FieldBase
+	SendAt         FieldBase
 }{
+	ID:             FieldBase{"`id`"},
 	AppID:          FieldBase{"`app_id`"},
 	ConversationID: FieldBase{"`conversation_id`"},
-	Data:           FieldBase{"`data`"},
-	Event:          FieldBase{"`event`"},
-	From:           FieldBase{"`from`"},
-	ID:             FieldBase{"`id`"},
 	MsgID:          FieldBase{"`msg_id`"},
-	SendAt:         FieldBase{"`send_at`"},
+	From:           FieldBase{"`from`"},
 	To:             FieldBase{"`to`"},
+	Event:          FieldBase{"`event`"},
+	Data:           FieldBase{"`data`"},
+	SendAt:         FieldBase{"`send_at`"},
 }
 
 type ChatHistory struct {
+	ID             uint64 `json:"id" gorm:"column:id;type:bigint unsigned;primaryKey;autoIncrement:true"`   //
 	AppID          string `json:"app_id" gorm:"column:app_id;type:varchar(128);not null"`                   //应用APPID
 	ConversationID string `json:"conversation_id" gorm:"column:conversation_id;type:varchar(128);not null"` //会话ID
-	Data           string `json:"data" gorm:"column:data;type:text;not null"`                               //消息内容json自定义
-	Event          int32  `json:"event" gorm:"column:event;type:int;not null"`                              //消息类型 1、普通消息 2、群组消息
-	From           string `json:"from" gorm:"column:from;type:varchar(128);not null"`                       //发送方标示
-	ID             uint64 `json:"id" gorm:"column:id;type:bigint unsigned;primaryKey;autoIncrement:true"`   //
 	MsgID          string `json:"msg_id" gorm:"column:msg_id;type:varchar(128);not null"`                   //消息ID
-	SendAt         int64  `json:"send_at" gorm:"column:send_at;type:bigint;not null"`                       //消息发送时间
+	From           string `json:"from" gorm:"column:from;type:varchar(128);not null"`                       //发送方标示
 	To             string `json:"to" gorm:"column:to;type:varchar(128);not null"`                           //接收方标示
+	Event          int32  `json:"event" gorm:"column:event;type:int;not null"`                              //消息类型 1、普通消息 2、群组消息
+	Data           string `json:"data" gorm:"column:data;type:text;not null"`                               //消息内容json自定义
+	SendAt         int64  `json:"send_at" gorm:"column:send_at;type:bigint;not null"`                       //消息发送时间
 }
 
 // TableName ChatHistory's table name

@@ -8,8 +8,7 @@ func initLogging(debug bool, appName string) {
 	if debug {
 		_conf = zap.NewDevelopmentConfig()
 	} else {
-		_conf = zap.NewProductionConfig(
-			)
+		_conf = zap.NewProductionConfig()
 	}
 	logger, _ := _conf.Build()
 	logger = logger.WithOptions(zap.AddCaller())

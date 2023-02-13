@@ -5,29 +5,32 @@ import (
 	"encoding/json"
 	"errors"
 	uuid "github.com/satori/go.uuid"
+	"github.com/seanlan/xlvein/app/common"
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"
 	"time"
 )
 
-const (
-	WsExchangeName = "xlvein.im"
-	WxQueueName    = "xlvein.im.queue"
-	ExchangeType   = "fanout"
-)
-
 type Session struct {
-	Conn  *amqp.Connection
-	Ch    *amqp.Channel
-	queue amqp.Queue
-	Uri   string
+	ExchangeName string
+	QueueName    string
+	ExchangeType string
+	Conn         *amqp.Connection
+	Ch           *amqp.Channel
+	queue        amqp.Queue
+	Uri          string
 }
 
-func NewSession(uri string) *Session {
-	return &Session{Uri: uri}
+func NewSession(uri, exchangeName, queueName string) *Session {
+	return &Session{
+		Uri:          uri,
+		ExchangeName: exchangeName,
+		QueueName:    queueName,
+		ExchangeType: "fanout",
+	}
 }
 
-func (s *Session) Dial() (err error) {
+func (s *Session) Dial() (err error) { // 连接rabbitmq
 	var (
 		conn  *amqp.Connection
 		ch    *amqp.Channel
@@ -44,8 +47,8 @@ func (s *Session) Dial() (err error) {
 	}
 	//声明Exchange
 	err = ch.ExchangeDeclare(
-		WsExchangeName, // name
-		ExchangeType,   // type
+		s.ExchangeName, // name
+		s.ExchangeType, // type
 		true,           // durable
 		false,          // auto-deleted
 		false,          // internal
@@ -57,13 +60,13 @@ func (s *Session) Dial() (err error) {
 	}
 	// 声明队列
 	u4 := uuid.NewV4()
-	queueName := WxQueueName + "." + u4.String()
+	queueName := s.QueueName + "." + u4.String()
 	queue, err = ch.QueueDeclare(queueName, false, true, true, false, nil)
 	if err != nil {
 		return
 	}
 	//绑定队列到Exchange
-	err = ch.QueueBind(queueName, "", WsExchangeName, false, nil)
+	err = ch.QueueBind(queueName, "", s.ExchangeName, false, nil)
 	if err != nil {
 		return
 	}
@@ -79,7 +82,7 @@ func (s *Session) Close() {
 	_ = s.Conn.Close()
 }
 
-func (s *Session) Receive(mq chan ExchangeMessage) (err error) {
+func (s *Session) Receive(mq chan Message) (err error) {
 	var (
 		deliveries <-chan amqp.Delivery
 		delivery   amqp.Delivery
@@ -106,7 +109,7 @@ func (s *Session) Receive(mq chan ExchangeMessage) (err error) {
 				loseConnection = true
 				break
 			}
-			var msg ExchangeMessage
+			var msg Message
 			err = json.Unmarshal(delivery.Body, &msg)
 			if err != nil {
 				continue
@@ -123,18 +126,18 @@ func (s *Session) Receive(mq chan ExchangeMessage) (err error) {
 }
 
 type RabbitMQExchange struct {
-	logger    Logger
+	logger    common.Logger
 	consume   MessageConsume
-	messageCh chan ExchangeMessage
+	messageCh chan Message
 	session   *Session
 }
 
-func NewRabbitMQExchange(uri string, log Logger) (ex *RabbitMQExchange, err error) {
+func NewRabbitMQExchange(uri, exchangeName, queueName string, log common.Logger) (ex *RabbitMQExchange, err error) {
 	ex = &RabbitMQExchange{
 		logger:    log,
-		messageCh: make(chan ExchangeMessage),
+		messageCh: make(chan Message),
 	}
-	session := NewSession(uri)
+	session := NewSession(uri, exchangeName, queueName)
 	ex.session = session
 	err = ex.Dial()
 	if err != nil {
@@ -143,31 +146,33 @@ func NewRabbitMQExchange(uri string, log Logger) (ex *RabbitMQExchange, err erro
 	return
 }
 
-func (l *RabbitMQExchange) Dial() (err error) {
-	err = l.session.Dial()
+func (ex *RabbitMQExchange) Dial() (err error) {
+	err = ex.session.Dial()
 	if err != nil {
+		ex.logger.Error(err)
 		return
 	}
 	go func() {
 		for {
-			err = l.session.Dial()
+			ex.logger.Info("rabbitmq reconnect")
+			err = ex.session.Dial()
 			if err != nil {
-				l.logger.Error(err)
+				ex.logger.Error(err)
 			}
-			err = l.session.Receive(l.messageCh)
+			err = ex.session.Receive(ex.messageCh)
 			if err != nil {
-				l.logger.Error(err)
+				ex.logger.Error(err)
 			}
-			time.Sleep(time.Second * 10) // 每5秒重连
+			time.Sleep(time.Second * 10) // 每10秒重连
 		}
 	}()
 	return
 }
 
-func (l *RabbitMQExchange) Push(message ExchangeMessage) {
+func (ex *RabbitMQExchange) Push(message Message) {
 	defer func() {
 		if err := recover(); err != nil {
-			l.logger.Error("LocalExchange.Push panic: %v", err)
+			ex.logger.Error("LocalExchange.Push panic: %v", err)
 		}
 	}()
 	var (
@@ -181,35 +186,35 @@ func (l *RabbitMQExchange) Push(message ExchangeMessage) {
 	}
 	msg.Body = body
 	msg.DeliveryMode = 2
-	err = l.session.Ch.Publish(WsExchangeName, "", false, false, msg)
+	err = ex.session.Ch.Publish(ex.session.ExchangeName, "", false, false, msg)
 	if err != nil {
-		l.logger.Error("publish message error", zap.Error(err))
+		ex.logger.Error("publish message error", zap.Error(err))
 		return
 	}
 	return
 }
 
-func (l *RabbitMQExchange) Receive(consume MessageConsume) {
-	l.consume = consume
+func (ex *RabbitMQExchange) Receive(consume MessageConsume) {
+	ex.consume = consume
 	return
 }
 
-func (l *RabbitMQExchange) loop(ctx context.Context) {
+func (ex *RabbitMQExchange) loop(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case msg := <-l.messageCh:
-			l.consume(msg)
+		case msg := <-ex.messageCh:
+			ex.consume(msg)
 		}
 	}
-	l.logger.Debug("LocalExchange.loop exit")
+	ex.logger.Debug("LocalExchange.loop exit")
 }
 
-func (l *RabbitMQExchange) Start(ctx context.Context) {
-	go l.loop(ctx)
+func (ex *RabbitMQExchange) Start(ctx context.Context) {
+	go ex.loop(ctx)
 }
 
-func (l *RabbitMQExchange) Stop() {
-	l.session.Close()
+func (ex *RabbitMQExchange) Stop() {
+	ex.session.Close()
 }

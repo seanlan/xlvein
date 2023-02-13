@@ -6,8 +6,8 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/seanlan/goutils/xlerror"
-    "github.com/seanlan/goutils/xlhttp"
+	"weplay/internal/e"
+    "weplay/pkg/xlhttp"
 	"{{.PackageName}}/{{.ModelPath}}"
 	"{{.PackageName}}/{{.ServicePath}}"
 )
@@ -20,7 +20,7 @@ func {{.ApiName}}(c *gin.Context) {
     r := xlhttp.Build(c)
     userID, err = r.GetJWTUID()
     if userID == 0 || err != nil {
-        r.JsonReturn(xlerror.ErrToken)
+        r.JsonReturn(e.ErrorToken)
         return
     }
 	var req model.{{.ReqStructName}}
@@ -28,7 +28,9 @@ func {{.ApiName}}(c *gin.Context) {
     if err != nil {
         return
     }
-    err, resp := service.{{.ServiceName}}(c, userID, req)
+    req.UserID = userID
+    req.ClientIP = c.ClientIP()
+    resp, err := service.{{.ServiceName}}(c, req)
     r.JsonReturn(err, resp)
     return
 }

@@ -2,23 +2,24 @@ package exchange
 
 import (
 	"context"
+	"github.com/seanlan/xlvein/app/common"
 )
 
 type LocalExchange struct {
-	logger    Logger
+	logger    common.Logger
 	consume   MessageConsume
-	messageCh chan ExchangeMessage
+	messageCh chan Message
 }
 
-func NewLocalExchange(log Logger) (*LocalExchange, error) {
+func NewLocalExchange(log common.Logger) (*LocalExchange, error) {
 	return &LocalExchange{
 		logger:    log,
-		messageCh: make(chan ExchangeMessage),
+		messageCh: make(chan Message),
 	}, nil
 }
 
 // Push 将消息推送到交换器
-func (l *LocalExchange) Push(message ExchangeMessage) {
+func (l *LocalExchange) Push(message Message) {
 	defer func() {
 		if err := recover(); err != nil {
 			l.logger.Error("LocalExchange.Push panic: %v", err)

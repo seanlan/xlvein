@@ -6,7 +6,7 @@ package model
 
 {{end}}
 type {{.ReqStructName}} struct {
-	Token string `form:"token" json:"token" binding:"required"`
+    BaseReq
 }
 
 type {{.RespStructName}} struct {

@@ -28,14 +28,14 @@ package sqlmodel
 const TableNameApplication = "application"
 
 var ApplicationColumns = struct {
-	AppID     FieldBase
+	AppKey    FieldBase
 	AppSecret FieldBase
 	CreateAt  FieldBase
 	ID        FieldBase
 	NotifyURL FieldBase
 	Whitelist FieldBase
 }{
-	AppID:     FieldBase{"`app_id`"},
+	AppKey:    FieldBase{"`app_key`"},
 	AppSecret: FieldBase{"`app_secret`"},
 	CreateAt:  FieldBase{"`create_at`"},
 	ID:        FieldBase{"`id`"},
@@ -44,7 +44,7 @@ var ApplicationColumns = struct {
 }
 
 type Application struct {
-	AppID     string `json:"app_id" gorm:"column:app_id;type:varchar(128);not null"`                 //应用APPID
+	AppKey    string `json:"app_key" gorm:"column:app_key;type:varchar(128);not null"`               //应用APPKEY
 	AppSecret string `json:"app_secret" gorm:"column:app_secret;type:varchar(255);not null"`         //APPSECRET
 	CreateAt  int64  `json:"create_at" gorm:"column:create_at;type:bigint;not null"`                 //创建时间
 	ID        uint64 `json:"id" gorm:"column:id;type:bigint unsigned;primaryKey;autoIncrement:true"` //

@@ -7,11 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/seanlan/goutils/xlhttp"
+	"github.com/seanlan/xlvein/app/common/transport"
 	"github.com/seanlan/xlvein/app/dao"
 	"github.com/seanlan/xlvein/app/dao/sqlmodel"
 	"github.com/seanlan/xlvein/app/e"
 	"github.com/seanlan/xlvein/app/model"
-	"github.com/seanlan/xlvein/app/transport"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -39,7 +39,7 @@ func SocketConnect(c *gin.Context) {
 		appQ = sqlmodel.ApplicationColumns
 		app  sqlmodel.Application
 	)
-	err = dao.FetchApplication(c, &app, appQ.AppID.Eq(req.AppID))
+	err = dao.FetchApplication(c, &app, appQ.AppKey.Eq(req.AppID))
 	if err != nil {
 		zap.S().Errorf("FetchApplication error: %s", err.Error())
 		r.JsonReturn(e.ErrAppNotFound)
@@ -58,6 +58,6 @@ func SocketConnect(c *gin.Context) {
 		zap.S().Errorf("Failed to set websocket upgrade: %#v", err)
 		return
 	}
-	transport.ClientHub.Join(app.AppID, tag, conn)
+	transport.ClientHub.Join(app.AppKey, tag, conn)
 	return
 }

@@ -5,7 +5,9 @@ package dao
 
 import (
 	"context"
+	"errors"
 	"github.com/seanlan/xlvein/app/dao/sqlmodel"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -15,7 +17,7 @@ func CountApplication(ctx context.Context, expr clause.Expression) (totalRows in
 		db = db.Where(expr)
 	}
 	db.Count(&totalRows)
-	return totalRows, nil
+	return totalRows, db.Error
 }
 
 func SumApplication(ctx context.Context, sumField sqlmodel.FieldBase, expr clause.Expression) (sum int64, err error) {
@@ -30,21 +32,22 @@ func SumApplication(ctx context.Context, sumField sqlmodel.FieldBase, expr claus
 	return sumValue.N, err
 }
 
-func FetchAllApplication(ctx context.Context, records interface{}, expr clause.Expression, page, pagesize int, orders ...string) (err error) {
+func FetchAllApplication(ctx context.Context, records interface{}, expr clause.Expression, page, size int, orders ...string) (err error) {
 	db := GetDB(ctx).WithContext(ctx).Model(&sqlmodel.Application{})
 	if expr != nil {
 		db = db.Where(expr)
 	}
 	if page > 0 {
-		offset := (page - 1) * pagesize
-		db = db.Offset(offset).Limit(pagesize)
+		offset := (page - 1) * size
+		db = db.Offset(offset).Limit(size)
 	} else {
-		db = db.Limit(pagesize)
+		db = db.Limit(size)
 	}
 	for _, order := range orders {
 		db = db.Order(order)
 	}
-	if err = db.Find(records).Error; err != nil {
+	err = db.Find(records).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		err = ErrNotFound
 		return err
 	}
@@ -59,9 +62,18 @@ func FetchApplication(ctx context.Context, record interface{}, expr clause.Expre
 	for _, order := range orders {
 		db = db.Order(order)
 	}
-	if err = db.First(record).Error; err != nil {
+	err = db.First(record).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		err = ErrNotFound
 		return err
+	}
+	return nil
+}
+
+func SaveApplication(ctx context.Context, d *sqlmodel.Application) (err error) {
+	db := GetDB(ctx).WithContext(ctx).Model(&sqlmodel.Application{}).Save(d)
+	if err = db.Error; err != nil {
+		return ErrInsertFailed
 	}
 	return nil
 }

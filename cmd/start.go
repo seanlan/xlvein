@@ -18,9 +18,9 @@ package cmd
 import (
 	"context"
 	"github.com/seanlan/goutils/xlconfig"
-	"github.com/seanlan/xlvein/app/exchange"
+	exchange2 "github.com/seanlan/xlvein/app/common/exchange"
+	"github.com/seanlan/xlvein/app/common/transport"
 	"github.com/seanlan/xlvein/app/router"
-	"github.com/seanlan/xlvein/app/transport"
 	"github.com/seanlan/xlvein/conf"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -30,15 +30,19 @@ func startFunc(cmd *cobra.Command, args []string) {
 	var (
 		err       error
 		ctx       = context.Background()
-		_exchange exchange.Exchange
+		_exchange exchange2.Exchange
 	)
 
 	exchangeType := xlconfig.GetString("exchange", "type")
 	switch exchangeType {
 	case "local":
-		_exchange, err = exchange.NewLocalExchange(zap.S())
+		_exchange, err = exchange2.NewLocalExchange(zap.S())
 	case "rabbitmq":
-		_exchange, err = exchange.NewRabbitMQExchange(xlconfig.GetString("exchange", "rabbitmq"), zap.S())
+		_exchange, err = exchange2.NewRabbitMQExchange(
+			xlconfig.GetString("exchange", "rabbitmq"),
+			xlconfig.GetString("exchange", "exchange_name"),
+			xlconfig.GetString("exchange", "queue_name"),
+			zap.S())
 
 	}
 	if err != nil {

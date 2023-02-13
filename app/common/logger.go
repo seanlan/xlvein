@@ -1,4 +1,4 @@
-package exchange
+package common
 
 type Logger interface {
 	Info(args ...interface{})

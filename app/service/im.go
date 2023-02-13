@@ -8,6 +8,6 @@ import (
 	"github.com/seanlan/xlvein/app/model"
 )
 
-func HealthCheck(ctx context.Context, userID int64, req model.HealthCheckReq) (err error, resp model.HealthCheckResp) {
+func CreateConversation(ctx context.Context, req model.CreateConversationReq) (resp model.CreateConversationResp, err error) {
 	return
 }

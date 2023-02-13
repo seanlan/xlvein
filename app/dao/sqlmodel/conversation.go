@@ -28,25 +28,31 @@ package sqlmodel
 const TableNameConversation = "conversation"
 
 var ConversationColumns = struct {
-	AppID            FieldBase
-	ConversationID   FieldBase
-	ConversationType FieldBase
-	CreateAt         FieldBase
-	ID               FieldBase
+	ID             FieldBase
+	AppID          FieldBase
+	ConversationID FieldBase
+	Name           FieldBase
+	Icon           FieldBase
+	MemberCount    FieldBase
+	CreateAt       FieldBase
 }{
-	AppID:            FieldBase{"`app_id`"},
-	ConversationID:   FieldBase{"`conversation_id`"},
-	ConversationType: FieldBase{"`conversation_type`"},
-	CreateAt:         FieldBase{"`create_at`"},
-	ID:               FieldBase{"`id`"},
+	ID:             FieldBase{"`id`"},
+	AppID:          FieldBase{"`app_id`"},
+	ConversationID: FieldBase{"`conversation_id`"},
+	Name:           FieldBase{"`name`"},
+	Icon:           FieldBase{"`icon`"},
+	MemberCount:    FieldBase{"`member_count`"},
+	CreateAt:       FieldBase{"`create_at`"},
 }
 
 type Conversation struct {
-	AppID            string `json:"app_id" gorm:"column:app_id;type:varchar(128);not null"`                  //应用APPID
-	ConversationID   string `json:"conversation_id" gorm:"column:conversation_id;type:varchar(56);not null"` //会话ID
-	ConversationType int32  `json:"conversation_type" gorm:"column:conversation_type;type:tinyint;not null"` //会话类型 1单聊 2会话
-	CreateAt         int64  `json:"create_at" gorm:"column:create_at;type:bigint;not null"`                  //创建时间
-	ID               uint64 `json:"id" gorm:"column:id;type:bigint unsigned;primaryKey;autoIncrement:true"`  //
+	ID             uint64 `json:"id" gorm:"column:id;type:bigint unsigned;primaryKey;autoIncrement:true"`  //
+	AppID          string `json:"app_id" gorm:"column:app_id;type:varchar(128);not null"`                  //应用APPID
+	ConversationID string `json:"conversation_id" gorm:"column:conversation_id;type:varchar(56);not null"` //会话ID
+	Name           string `json:"name" gorm:"column:name;type:varchar(56);not null"`                       //会话名称
+	Icon           string `json:"icon" gorm:"column:icon;type:varchar(256);not null"`                      //会话图标
+	MemberCount    int64  `json:"member_count" gorm:"column:member_count;type:bigint;not null"`            //成员数量
+	CreateAt       int64  `json:"create_at" gorm:"column:create_at;type:bigint;not null"`                  //创建时间
 }
 
 // TableName Conversation's table name
