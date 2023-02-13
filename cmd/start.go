@@ -18,7 +18,7 @@ package cmd
 import (
 	"context"
 	"github.com/seanlan/goutils/xlconfig"
-	exchange2 "github.com/seanlan/xlvein/app/common/exchange"
+	"github.com/seanlan/xlvein/app/common/exchange"
 	"github.com/seanlan/xlvein/app/common/transport"
 	"github.com/seanlan/xlvein/app/router"
 	"github.com/seanlan/xlvein/conf"
@@ -30,20 +30,25 @@ func startFunc(cmd *cobra.Command, args []string) {
 	var (
 		err       error
 		ctx       = context.Background()
-		_exchange exchange2.Exchange
+		_exchange exchange.Exchange
 	)
 
 	exchangeType := xlconfig.GetString("exchange", "type")
 	switch exchangeType {
-	case "local":
-		_exchange, err = exchange2.NewLocalExchange(zap.S())
-	case "rabbitmq":
-		_exchange, err = exchange2.NewRabbitMQExchange(
+	case exchange.ExchangeTypeLocal:
+		_exchange, err = exchange.NewLocalExchange(zap.S())
+	case exchange.ExchangeTypeRabitMQ:
+		_exchange, err = exchange.NewRabbitMQExchange(
 			xlconfig.GetString("exchange", "rabbitmq"),
 			xlconfig.GetString("exchange", "exchange_name"),
 			xlconfig.GetString("exchange", "queue_name"),
 			zap.S())
-
+	case exchange.ExchangeTypeReids:
+		_exchange, err = exchange.NewRedisExchange(
+			ctx,
+			xlconfig.GetString("exchange", "redis"),
+			xlconfig.GetString("exchange", "queue_name"),
+			zap.S())
 	}
 	if err != nil {
 		zap.S().Fatal("new exchange error", zap.Error(err))

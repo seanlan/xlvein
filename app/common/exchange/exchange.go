@@ -25,6 +25,12 @@ type Message struct {
 
 type MessageConsume func(message Message)
 
+const (
+	ExchangeTypeLocal   = "local"
+	ExchangeTypeRabitMQ = "rabbitmq"
+	ExchangeTypeReids   = "redis"
+)
+
 // Exchange 消息交换器
 type Exchange interface {
 	Push(message Message)           // 将消息推送到交换器
