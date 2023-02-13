@@ -154,7 +154,6 @@ func (ex *RabbitMQExchange) Dial() (err error) {
 	}
 	go func() {
 		for {
-			ex.logger.Info("rabbitmq reconnect")
 			err = ex.session.Dial()
 			if err != nil {
 				ex.logger.Error(err)

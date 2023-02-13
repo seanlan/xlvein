@@ -22,8 +22,11 @@ import (
 )
 
 func testFunc(cmd *cobra.Command, args []string) {
-	sdk := veinsdk.New("", "test", "j8jasd98efan9sdfj89asjdf")
+	sdk := veinsdk.New("http://127.0.0.1:8090", "test", "j8jasd98efan9sdfj89asjdf")
 	zap.S().Info(sdk.ProduceIMToken("user_1"))
+	resp, err := sdk.PushMessage("user_1", map[string]interface{}{"text": "123123123123123"})
+	zap.S().Info(resp.GetString())
+	zap.S().Infof("%#v", err)
 	//ctx := context.TODO()
 	//ctx1 := context.WithValue(ctx, "a", 1)
 	//ctx2 := context.WithValue(ctx1, "b", 2)

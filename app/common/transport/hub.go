@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/seanlan/xlvein/app/common"
 	"github.com/seanlan/xlvein/app/common/exchange"
-	"time"
 )
 
 type GetConversationMembers func(appID, conversationId string) ([]string, error) // 获取会话成员
@@ -58,7 +57,6 @@ func (h *Hub) PushToExchange(appID string, msg Message) {
 		Event:          msg.Event,
 		Data:           msg.Data,
 		MsgID:          uu.String(),
-		SendAt:         time.Now().UnixMilli(),
 		ConversationID: msg.ConversationID,
 	}
 	h.exchange.Push(exchangeMsg)

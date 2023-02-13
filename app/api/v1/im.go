@@ -10,18 +10,18 @@ import (
 	"github.com/seanlan/xlvein/pkg/xlhttp"
 )
 
-func CreateConversation(c *gin.Context) {
+func PushMessage(c *gin.Context) {
 	var (
 		err error
 	)
 	r := xlhttp.Build(c)
-	var req model.CreateConversationReq
+	var req model.PushMessageReq
 	err = r.RequestParser(&req)
 	if err != nil {
 		return
 	}
 	req.ClientIP = c.ClientIP()
-	resp, err := service.CreateConversation(c, req)
+	resp, err := service.PushMessage(c, req)
 	r.JsonReturn(err, resp)
 	return
 }

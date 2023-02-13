@@ -36,8 +36,7 @@ func Setup(debug bool) {
 	apiGroup := Router.Group("api/v1")
 	imGroup := apiGroup.Group("im")
 	{
-		// 创建会话
-		imGroup.POST("create", v1.CreateConversation)
+		imGroup.POST("push", v1.PushMessage)
 	}
 }
 

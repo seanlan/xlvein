@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/parnurzeal/gorequest"
@@ -26,7 +27,7 @@ func MakeTimedToken(data, secret string, expire int64) (string, error) {
 	return token.SignedString([]byte(secret))
 }
 
-func MapToUrlencoded(m map[string]string, secretKey string) string {
+func MapToUrlencoded(m map[string]interface{}, secretKey string) string {
 	var keys []string
 	var _source []string
 	for k := range m {
@@ -35,11 +36,11 @@ func MapToUrlencoded(m map[string]string, secretKey string) string {
 	//字符串排序
 	sort.Strings(keys)
 	for _, k := range keys {
-		_source = append(_source, fmt.Sprintf("%s=%s", k, m[k]))
+		_source = append(_source, fmt.Sprintf("%s=%v", k, m[k]))
 	}
 	//map URL加入密钥拼接
 	_source = append(_source, fmt.Sprintf("%s=%s", "key", secretKey))
-	sourceStr := strings.Join(_source, "")
+	sourceStr := strings.Join(_source, "&")
 	//MD5加密
 	h := md5.New()
 	h.Write([]byte(sourceStr))
@@ -61,7 +62,7 @@ func New(gate, appid, secret string) *SDK {
 }
 
 // GetSign 参数签名
-func (client *SDK) GetSign(jsonObject map[string]string) string {
+func (client *SDK) GetSign(jsonObject map[string]interface{}) string {
 	return MapToUrlencoded(jsonObject, client.AppSecret)
 }
 
@@ -81,7 +82,7 @@ func (client *SDK) ProduceIMToken(userTag string) (string, error) {
 }
 
 // Request 基础请求接口
-func (client *SDK) Request(path string, jsonObject map[string]string) (string, error) {
+func (client *SDK) Request(path string, jsonObject map[string]interface{}) (string, error) {
 	request := gorequest.New()
 	_, body, errs := request.Post(path).
 		Type("form").
@@ -96,7 +97,7 @@ func (client *SDK) Request(path string, jsonObject map[string]string) (string, e
 }
 
 // ApiRequest API封装请求
-func (client *SDK) ApiRequest(method string, jsonObject map[string]string) (resp xljson.JsonObject, err error) {
+func (client *SDK) ApiRequest(method string, jsonObject map[string]interface{}) (resp xljson.JsonObject, err error) {
 	//API接口请求
 	var buf bytes.Buffer
 	buf.WriteString(client.Gateway)
@@ -110,4 +111,18 @@ func (client *SDK) ApiRequest(method string, jsonObject map[string]string) (resp
 	}
 	resp = xljson.JsonObject{Buff: []byte(body)}
 	return
+}
+
+func (client *SDK) PushMessage(sendTo string, message map[string]interface{}) (resp xljson.JsonObject, err error) {
+	var msg []byte
+	msg, err = json.Marshal(message)
+	if err != nil {
+		return
+	}
+	return client.ApiRequest("/api/v1/im/push", map[string]interface{}{
+		"app_key": client.AppID,
+		"send_to": sendTo,
+		"message": string(msg),
+		"nonce":   client.GetNonce(),
+	})
 }
