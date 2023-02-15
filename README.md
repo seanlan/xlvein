@@ -44,6 +44,28 @@ bindKey = jwt.sign(payload,appSecret,{expiresIn:3600*24*30})
 ```
 token错误会被拒绝链接
 
+### 接收消息格式
+```json
+{
+	"from": "user_1", // 发送方账号
+	"to": "user_2", // 接收方账号
+	"event": 0, // 事件类型 0:消息
+	"data": {}, // 消息内容 自定义object
+	"msg_id": "123456", // 消息id
+	"send_at": 1234567890123, // 毫秒
+    "conversation_id": "123456" // 会话id
+}
+```
+
+### 发送消息格式
+```json
+{
+	"to": "user_2", // 接收方账号
+	"data": {}, // 消息内容 自定义object
+}
+```
+
+
 
 ### 调用Http API 推送消息
 - 接口地址：/api/v1/im/push

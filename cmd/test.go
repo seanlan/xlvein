@@ -30,11 +30,6 @@ func testFunc(cmd *cobra.Command, args []string) {
 	resp, err := sdk.PushMessage("user_1", map[string]interface{}{"text": "123123123123123"})
 	zap.S().Info(resp.GetString())
 	zap.S().Infof("%#v", err)
-	//ctx := context.TODO()
-	//ctx1 := context.WithValue(ctx, "a", 1)
-	//ctx2 := context.WithValue(ctx1, "b", 2)
-	//fmt.Println(ctx2.Value("a"))
-	//fmt.Println(ctx2.Value("b"))
 }
 
 // testCmd represents the test command
