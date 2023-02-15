@@ -16,12 +16,14 @@ limitations under the License.
 package cmd
 
 import (
+	"github.com/seanlan/xlvein/internal/config"
 	"github.com/seanlan/xlvein/pkg/veinsdk"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
 
 func testFunc(cmd *cobra.Command, args []string) {
+	zap.S().Infof("config: %#v", config.C)
 	sdk := veinsdk.New("http://127.0.0.1:8090", "test", "j8jasd98efan9sdfj89asjdf")
 	zap.S().Info(sdk.ProduceIMToken("user_1"))
 	resp, err := sdk.PushMessage("user_1", map[string]interface{}{"text": "123123123123123"})

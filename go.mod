@@ -11,7 +11,6 @@ require (
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/websocket v1.4.2
-	github.com/json-iterator/go v1.1.11
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/parnurzeal/gorequest v0.2.16
 	github.com/pkg/errors v0.9.1
@@ -21,6 +20,5 @@ require (
 	github.com/spf13/viper v1.9.0
 	github.com/streadway/amqp v1.0.0
 	go.uber.org/zap v1.19.1
-	gorm.io/driver/mysql v1.2.1
-	gorm.io/gorm v1.22.4
+	gopkg.in/yaml.v3 v3.0.1
 )

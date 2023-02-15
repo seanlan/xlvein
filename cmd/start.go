@@ -17,11 +17,10 @@ package cmd
 
 import (
 	"context"
-	"github.com/seanlan/goutils/xlconfig"
-	"github.com/seanlan/xlvein/app/common/exchange"
-	"github.com/seanlan/xlvein/app/common/transport"
-	"github.com/seanlan/xlvein/app/router"
-	"github.com/seanlan/xlvein/conf"
+	"github.com/seanlan/xlvein/internal/common/exchange"
+	"github.com/seanlan/xlvein/internal/common/transport"
+	"github.com/seanlan/xlvein/internal/config"
+	"github.com/seanlan/xlvein/internal/router"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -33,29 +32,29 @@ func startFunc(cmd *cobra.Command, args []string) {
 		_exchange exchange.Exchange
 	)
 
-	exchangeType := xlconfig.GetString("exchange", "type")
+	exchangeType := config.C.Exchange.Type
 	switch exchangeType {
 	case exchange.ExchangeTypeLocal:
 		_exchange, err = exchange.NewLocalExchange(zap.S())
 	case exchange.ExchangeTypeRabitMQ:
 		_exchange, err = exchange.NewRabbitMQExchange(
-			xlconfig.GetString("exchange", "rabbitmq"),
-			xlconfig.GetString("exchange", "exchange_name"),
-			xlconfig.GetString("exchange", "queue_name"),
+			config.C.Exchange.Rabbitmq,
+			config.C.Exchange.ExchangeName,
+			config.C.Exchange.QueueName,
 			zap.S())
 	case exchange.ExchangeTypeReids:
 		_exchange, err = exchange.NewRedisExchange(
 			ctx,
-			xlconfig.GetString("exchange", "redis"),
-			xlconfig.GetString("exchange", "queue_name"),
+			config.C.Exchange.Redis,
+			config.C.Exchange.QueueName,
 			zap.S())
 	}
 	if err != nil {
 		zap.S().Fatal("new exchange error", zap.Error(err))
 	}
 	transport.InitHub(ctx, _exchange, zap.S())
-	router.Setup(conf.DebugMode)
-	router.Run(xlconfig.GetString("host"))
+	router.Setup(config.C.Debug)
+	router.Run(config.C.Host)
 }
 
 // startCmd represents the start command

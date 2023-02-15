@@ -17,7 +17,6 @@ package main
 
 import (
 	"github.com/seanlan/xlvein/cmd"
-	_ "github.com/seanlan/xlvein/init"
 )
 
 func main() {
