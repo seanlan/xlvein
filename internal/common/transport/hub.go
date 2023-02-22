@@ -7,11 +7,13 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/seanlan/xlvein/internal/common"
 	"github.com/seanlan/xlvein/internal/common/exchange"
+	"sync"
 )
 
 type GetConversationMembers func(appID, conversationId string) ([]string, error) // 获取会话成员
 
 type Hub struct { // transport 管理器
+	sync.RWMutex
 	exchange      exchange.Exchange
 	clients       map[string]*hashset.Set
 	logger        common.Logger
@@ -31,20 +33,24 @@ func InitHub(ctx context.Context, ex exchange.Exchange, logger common.Logger) {
 
 // Join 加入一条链接
 func (h *Hub) Join(appID, Tag string, conn *websocket.Conn) {
+	h.RLock()
 	transport := NewTransport(appID, Tag, conn, h)
 	transport.Start()
 	if h.clients[transport.Key] == nil {
 		h.clients[transport.Key] = hashset.New()
 	}
 	h.clients[transport.Key].Add(transport)
+	h.RUnlock()
 }
 
 // Drop 剔除一条链接
 func (h *Hub) Drop(transport *Transport) {
+	h.Lock()
 	key := transport.Key
 	if _, ok := h.clients[key]; ok {
 		h.clients[key].Remove(transport)
 	}
+	h.Unlock()
 }
 
 // PushToExchange 将消费推送到消息交换器
