@@ -146,7 +146,7 @@ func (ex *RedisExchange) loop(ctx context.Context) {
 	ex.logger.Debug("LocalExchange.loop exit")
 }
 
-func (ex *RedisExchange) Start(ctx context.Context) {
+func (ex *RedisExchange) Run(ctx context.Context) {
 	go ex.loop(ctx)
 }
 

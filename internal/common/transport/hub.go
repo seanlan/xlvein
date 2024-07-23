@@ -35,7 +35,7 @@ func InitHub(ctx context.Context, ex exchange.Exchange, logger common.Logger) {
 func (h *Hub) Join(appID, Tag string, conn *websocket.Conn) {
 	h.RLock()
 	transport := NewTransport(appID, Tag, conn, h)
-	transport.Start()
+	transport.Run()
 	if h.clients[transport.Key] == nil {
 		h.clients[transport.Key] = hashset.New()
 	}
@@ -111,5 +111,5 @@ func (h *Hub) Run(ctx context.Context) {
 	h.exchange.Receive(func(message exchange.Message) {
 		h.distribute(message)
 	})
-	h.exchange.Start(ctx)
+	h.exchange.Run(ctx)
 }

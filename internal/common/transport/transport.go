@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
-	//json "github.com/json-iterator/go"
 	"time"
 )
 
@@ -44,7 +43,7 @@ func NewTransport(appID, tag string, conn *websocket.Conn, hub *Hub) *Transport 
 	}
 }
 
-func (trans *Transport) Start() {
+func (trans *Transport) Run() {
 	go trans.doRead()
 	go trans.doWrite()
 }
@@ -68,14 +67,17 @@ func (trans *Transport) doRead() {
 		})
 	// 开始接收消息
 	for {
-		_, message, err := trans.conn.ReadMessage()
+		messageType, message, err := trans.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(
-				err,
-				websocket.CloseGoingAway,
-				websocket.CloseAbnormalClosure) {
-			}
-			break
+			trans.hub.logger.Infof("read message error: %s", err.Error())
+			return
+		}
+		if messageType == websocket.PingMessage {
+			trans.hub.logger.Info("this is a  pingMessage")
+		}
+		if messageType == websocket.CloseMessage {
+			trans.hub.logger.Info("this is a  closeMessage")
+			return
 		}
 		trans.hub.logger.Debugf("received messages: %s", string(message))
 		//消息重新封装

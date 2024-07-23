@@ -46,7 +46,7 @@ func (l *LocalExchange) loop(ctx context.Context) {
 	}
 }
 
-func (l *LocalExchange) Start(ctx context.Context) {
+func (l *LocalExchange) Run(ctx context.Context) {
 	go l.loop(ctx)
 }
 

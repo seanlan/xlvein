@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,11 +24,11 @@ import (
 
 func testFunc(cmd *cobra.Command, args []string) {
 	zap.S().Infof("config: %#v", config.C)
-	sdk := veinsdk.New("http://127.0.0.1:8090", "test", "j8jasd98efan9sdfj89asjdf")
+	sdk := veinsdk.New("https://ws.rovex.io", "test", "j8jasd98efan9sdfj89asjdf")
 	token, err := sdk.ProduceIMToken("user_1")
 	zap.S().Infof("ws://127.0.0.1:8090/ws/connect?app_id=test&token=%s", token)
 	resp, err := sdk.PushMessage("user_1", map[string]interface{}{"text": "123123123123123"})
-	zap.S().Info(resp.GetString())
+	zap.S().Info(resp.Data)
 	zap.S().Infof("%#v", err)
 }
 

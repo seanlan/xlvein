@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/parnurzeal/gorequest"
-	"github.com/seanlan/goutils/xljson"
 	"math/rand"
 	"sort"
 	"strings"
@@ -97,7 +96,7 @@ func (client *SDK) Request(path string, jsonObject map[string]interface{}) (stri
 }
 
 // ApiRequest API封装请求
-func (client *SDK) ApiRequest(method string, jsonObject map[string]interface{}) (resp xljson.JsonObject, err error) {
+func (client *SDK) ApiRequest(method string, jsonObject map[string]interface{}) (resp string, err error) {
 	//API接口请求
 	var buf bytes.Buffer
 	buf.WriteString(client.Gateway)
@@ -105,24 +104,24 @@ func (client *SDK) ApiRequest(method string, jsonObject map[string]interface{}) 
 	apiUrl := buf.String()
 	sign := MapToUrlencoded(jsonObject, client.AppSecret)
 	jsonObject["sign"] = sign
-	body, err := client.Request(apiUrl, jsonObject)
-	if err != nil {
-		return
-	}
-	resp = xljson.JsonObject{Buff: []byte(body)}
+	resp, err = client.Request(apiUrl, jsonObject)
 	return
 }
 
-func (client *SDK) PushMessage(sendTo string, message map[string]interface{}) (resp xljson.JsonObject, err error) {
+func (client *SDK) PushMessage(sendTo string, message map[string]interface{}) (resp *PushMessageResponse, err error) {
 	var msg []byte
 	msg, err = json.Marshal(message)
 	if err != nil {
 		return
 	}
-	return client.ApiRequest("/api/v1/im/push", map[string]interface{}{
+	var body string
+	body, err = client.ApiRequest("/api/v1/im/push", map[string]interface{}{
 		"app_key": client.AppID,
 		"send_to": sendTo,
 		"message": string(msg),
 		"nonce":   client.GetNonce(),
 	})
+	resp = &PushMessageResponse{}
+	err = json.Unmarshal([]byte(body), resp)
+	return
 }

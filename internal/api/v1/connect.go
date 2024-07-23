@@ -13,14 +13,13 @@ import (
 	"github.com/seanlan/xlvein/internal/model"
 	"go.uber.org/zap"
 	"net/http"
+	"time"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
+var upGrader = websocket.Upgrader{
+	HandshakeTimeout: time.Duration(10) * time.Second,
+	ReadBufferSize:   4096,
+	CheckOrigin:      func(r *http.Request) bool { return true },
 }
 
 func SocketConnect(c *gin.Context) {
@@ -48,7 +47,7 @@ func SocketConnect(c *gin.Context) {
 		return
 	}
 	// 建立websocket连接
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	conn, err := upGrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		zap.S().Errorf("Failed to set websocket upgrade: %#v", err)
 		return

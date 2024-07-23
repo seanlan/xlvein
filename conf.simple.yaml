@@ -1,0 +1,26 @@
+debug: true
+app: "vein"
+# gin配置
+host: ":8090"
+# db配置
+mysql:
+  root:4jjGEWcQeN4gmp9@tcp(172.22.0.8:3306)/vein?parseTime=true&loc=Local&charset=utf8mb4&collation=utf8mb4_unicode_ci
+# redis配置
+redis:
+  hosts: "172.22.0.3:6379"
+  prefix: "vein"
+  username: ""
+  password: ""
+  db: 0
+# 交换机配置
+exchange:
+  type: "redis" # 消息交换类型 目前支持 rabbitmq,redis,local local方式不支持分布式部署
+  redis: "172.22.0.3:6379"
+#  exchange_name: "xlvein.im"
+#  queue_name: "xlvein.im.queue"
+#  rabbitmq: "amqp://xlvein:WFxg5FNMedN@T$z@127.0.0.1:5672/vein"
+
+# 应用配置
+applications:
+  - {app_key: "test",  app_secret: "j8jasd98efan9sdfj89asjdf"}
+  - {app_key: "test2", app_secret: "j8jasd98efan9sdfj89asjdf"}

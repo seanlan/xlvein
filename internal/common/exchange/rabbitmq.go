@@ -210,7 +210,7 @@ func (ex *RabbitMQExchange) loop(ctx context.Context) {
 	ex.logger.Debug("LocalExchange.loop exit")
 }
 
-func (ex *RabbitMQExchange) Start(ctx context.Context) {
+func (ex *RabbitMQExchange) Run(ctx context.Context) {
 	go ex.loop(ctx)
 }
 

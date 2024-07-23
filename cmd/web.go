@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func startFunc(cmd *cobra.Command, args []string) {
+func webFunc(cmd *cobra.Command, args []string) {
 	var (
 		err       error
 		ctx       = context.Background()
@@ -34,15 +34,15 @@ func startFunc(cmd *cobra.Command, args []string) {
 
 	exchangeType := config.C.Exchange.Type
 	switch exchangeType {
-	case exchange.ExchangeTypeLocal:
+	case exchange.TypeLocal:
 		_exchange, err = exchange.NewLocalExchange(zap.S())
-	case exchange.ExchangeTypeRabitMQ:
+	case exchange.TypeRabbitMQ:
 		_exchange, err = exchange.NewRabbitMQExchange(
 			config.C.Exchange.Rabbitmq,
 			config.C.Exchange.ExchangeName,
 			config.C.Exchange.QueueName,
 			zap.S())
-	case exchange.ExchangeTypeReids:
+	case exchange.TypeRedis:
 		_exchange, err = exchange.NewRedisExchange(
 			ctx,
 			config.C.Exchange.Redis,
@@ -59,7 +59,7 @@ func startFunc(cmd *cobra.Command, args []string) {
 
 // startCmd represents the start command
 var startCmd = &cobra.Command{
-	Use:   "start",
+	Use:   "web",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -67,7 +67,7 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: startFunc,
+	Run: webFunc,
 }
 
 func init() {
